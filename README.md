@@ -1,6 +1,8 @@
+
+
 This script is made to run on Paperspace P4000, P5000, AWS G3.4xLarge and Azure NV6 machines.  
 
-This script checks NVIDIA.com for updates, and will download and install graphics drivers including setting NVIDIA-SMI to the correct value on required GPUs.  
+This script checks NVIDIA.com (or the cloud computing provider directly, when available) for updates, and will download and install graphics drivers including setting NVIDIA-SMI to the correct value on required GPUs.
 
 ### Supported Operating Systems  
 
