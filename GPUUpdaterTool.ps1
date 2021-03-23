@@ -528,6 +528,7 @@ $app.Parsec = Write-Host -foregroundcolor red "
                                 ######(*                   
                                                            
                   ~Parsec GPU Updater~
+                  ~Modified by SoftwareRat~
 " 
 
 function rebootLogic {
