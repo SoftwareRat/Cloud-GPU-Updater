@@ -53,9 +53,9 @@ Function G4DNUseSavedCreds {
 function UpdateScript {
     $wc = [System.Net.WebClient]::new()
     $pkgurl = 'https://raw.githubusercontent.com/SoftwareRat/Cloud-GPU-Updater/master/GPUUpdaterTool.ps1'
-    $publishedHash = (Get-FileHash -Path 'C:\Users\SoftwareRat\Documents\Cloud-GPU-Updater\GPUUpdaterTool.ps1' -Algorithm SHA256).Hash
+    $publishedHash = (Get-FileHash -Path 'C:\Users\SoftwareRat\Documents\Cloud-GPU-Updater\GPUUpdaterTool.ps1' -Algorithm SHA256)
     $FileHash = Get-FileHash -InputStream ($wc.OpenRead($pkgurl))
-    IF ($FileHash.Hash -eq $publishedHash) {
+    IF ($FileHash.Hash -eq $publishedHash.Hash) {
         Write-Output "Script don't need update"} else {
         Write-Output "Script need update"}
         }
