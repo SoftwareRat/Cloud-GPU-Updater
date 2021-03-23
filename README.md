@@ -21,7 +21,7 @@ Google T4 VW (Tesla T4 with Virtual Workstation Driver)
 
 ### Instructions  
    
-1. Download https://github.com/jamesstringerparsec/Cloud-GPU-Updater/archive/master.zip  
+1. Download https://github.com/softwarerat/Cloud-GPU-Updater/archive/master.zip  
 2. Extract the folder, right click "GPU Updater Tool.ps1" and run with Powershell - if the script immediately closes, right click and click edit, then the green play button in the Powershell ISE toolbar.  
 
 ### Q&A  
