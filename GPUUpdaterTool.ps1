@@ -16,7 +16,7 @@ function installedGPUID {
 function driverVersion {
     #Queries WMI to request the driver version, and formats it to match that of a NVIDIA Driver version number (NNN.NN) 
     Try {
-        (Get-WmiObject Win32_PnPSignedDriver | where {$_.DeviceName -like "*nvidia*" -and $_.DeviceClass -like "Display"} | Select-Object -ExpandProperty DriverVersion).substring(7,6).replace('.','').Insert(3,'.')
+        (Get-WmiObject Win32_PnPSignedDriver | Where-Object {$_.DeviceName -like "*nvidia*" -and $_.DeviceClass -like "Display"} | Select-Object -ExpandProperty DriverVersion).substring(7,6).replace('.','').Insert(3,'.')
         }
     Catch {
         }
@@ -31,8 +31,8 @@ Function G4DNUseSavedCreds {
     Param (
     $ProfileName
     )
-    If ($system.G4DNCredentialCheckAlreadyRan -eq $null) {
-        if ((Get-AWSCredential -ProfileName $ProfileName) -ne $null) {
+    If ($null -eq $system.G4DNCredentialCheckAlreadyRan) {
+        if ($null -ne (Get-AWSCredential -ProfileName $ProfileName)) {
             Write-Host "Found saved AWS Access Key for G4DN Driver"
             Write-Host "Use saved credentials?"
             $ReadHost = Read-Host "(Y/N)"
@@ -50,11 +50,21 @@ Function G4DNUseSavedCreds {
     $system.G4DNCredentialCheckAlreadyRan = 1
 }
 
+function UpdateScript {
+    $wc = [System.Net.WebClient]::new()
+    $pkgurl = 'https://raw.githubusercontent.com/SoftwareRat/Cloud-GPU-Updater/master/GPUUpdaterTool.ps1'
+    $publishedHash = (Get-FileHash -Path 'C:\Users\SoftwareRat\Documents\Cloud-GPU-Updater\GPUUpdaterTool.ps1' -Algorithm SHA256)
+    $FileHash = Get-FileHash -InputStream ($wc.OpenRead($pkgurl))
+    IF ($FileHash.Hash -eq $publishedHash.Hash) {
+        Write-Output "Script don't need update"} else {
+        Write-Output "Script need update"}
+        }
+
 Function G4DN {
     param (
     $profileName    
     )
-    if ((Get-AWSCredential -ProfileName $profileName) -ne $null) {
+    if ($null -ne (Get-AWSCredential -ProfileName $profileName)) {
         }
     Else {
         Write-host "The G4dn instance requires a non-public driver, you will need to create or use an existing Access key found here, or create an IAM with permissions to read nvidia-gaming.s3.amazonaws.com"
@@ -119,7 +129,7 @@ function RequiresReboot {
         try { 
             $util = [wmiclass]"\\.\root\ccm\clientsdk:CCM_ClientUtilities"
             $status = $util.DetermineIfRebootPending()
-            if(($status -ne $null) -and $status.RebootPending){
+            if(($null -ne $status) -and $status.RebootPending){
                 $System.OS_Reboot_Reason = "Your system requires a reboot to complete driver updates"
                 Return $True
                 }
@@ -224,7 +234,7 @@ Function webDriver {
         $G4WebDriver.tostring().split('-')[1]
         }
     Elseif ((($gpu.supported -eq "UnOfficial")  -and ($gpu.cloudprovider -eq "Google"))-eq $true) {
-        $googlestoragedriver =([xml](invoke-webrequest -uri https://storage.googleapis.com/nvidia-drivers-us-public).content).listbucketresult.contents.key  -like  "*GRID1*server2016*.exe" | select -Last 1
+        $googlestoragedriver =([xml](invoke-webrequest -uri https://storage.googleapis.com/nvidia-drivers-us-public).content).listbucketresult.contents.key  -like  "*GRID1*server2016*.exe" | Select-Object -Last 1
         $googlestoragedriver.split('/')[2].split('_')[0]
         }
     Elseif((($gpu.Supported -eq "yes") -and ($gpu.cloudprovider -eq "azure")) -eq $true){
@@ -259,6 +269,7 @@ function queryOS {
     #sets OS support
     if (($system.OS_Version -like "*Windows 10*") -eq $true) {$gpu.OSID = '57' ; $system.OS_Supported = $false}
     elseif (($system.OS_Version -like "*Windows 8.1*") -eq $true) {$gpu.OSID = "41"; $system.OS_Supported = $false}
+    elseif (($system.OS_Version -like "*Server 2012 R2*") -eq $true) {$gpu.OSID = "41"; $system.OS_Supported = $true}
     elseif (($system.OS_Version -like "*Server 2016*") -eq $true) {$gpu.OSID = "74"; $system.OS_Supported = $true}
     elseif (($system.OS_Version -like "*Server 2019*") -eq $true) {$gpu.OSID = "74"; $system.OS_Supported = $true}
     Else {$system.OS_Supported = $false}
@@ -295,7 +306,7 @@ function queryGPU {
     Elseif($gpu.Device_ID -eq "DEV_15F8") {$gpu.Name = 'NVIDIA Tesla P100'; $gpu.PSID = '103'; $gpu.PFID = '822'; $gpu.NV_GRID = $true; $gpu.Driver_Version = driverversion; $gpu.Web_Driver = webdriver; $gpu.Update_Available = ($gpu.Web_Driver -gt $gpu.Driver_Version); $gpu.Current_Mode = GPUCurrentMode; $gpu.Supported = "UnOfficial"; $gpu.cloudProvider = cloudprovider}
     Elseif($gpu.Device_ID -eq "DEV_1BB3") {$gpu.Name = 'NVIDIA Tesla P4'; $gpu.PSID = '103'; $gpu.PFID = '831'; $gpu.NV_GRID = $true; $gpu.Driver_Version = driverversion; $gpu.Web_Driver = webdriver; $gpu.Update_Available = ($gpu.Web_Driver -gt $gpu.Driver_Version); $gpu.Current_Mode = GPUCurrentMode; $gpu.Supported = "UnOfficial"; $gpu.cloudProvider = cloudprovider}
     Elseif($gpu.Device_ID -eq "DEV_1EB8") {$gpu.Name = 'NVIDIA Tesla T4'; $gpu.PSID = '110'; $gpu.PFID = '883'; $gpu.NV_GRID = $true; $gpu.Driver_Version = driverversion; $gpu.Web_Driver = webdriver; $gpu.Update_Available = ($gpu.Web_Driver -gt $gpu.Driver_Version); $gpu.Current_Mode = GPUCurrentMode; $gpu.Supported = "UnOfficial"; $gpu.cloudProvider = cloudprovider}
-    Elseif($gpu.Device_ID -eq $null) {$gpu.Supported = "No"; $gpu.Name = "No Device Found"}
+    Elseif($null -eq $gpu.Device_ID) {$gpu.Supported = "No"; $gpu.Name = "No Device Found"}
     else{$gpu.Supported = "No"; $gpu.Name = webName} 
 }
 
@@ -401,7 +412,7 @@ function DownloadDriver {
         $S3Path = G4DN GPUUpdateG4Dn
         (New-Object System.Net.WebClient).DownloadFile($("https://nvidia-gaming.s3.amazonaws.com/" + $s3path), $($system.Path) + "\NVIDIA_" + $($gpu.web_driver) + ".zip")
         Expand-Archive -Path ($($system.Path) + "\NVIDIA_" + $($gpu.web_driver) + ".zip") -DestinationPath "$($system.Path)\ExtractedGPUDriver\"
-        $extractedpath = Get-ChildItem -Path "$($system.Path)\ExtractedGPUDriver\Windows\" | Where-Object name -like '*win10*' | % name
+        $extractedpath = Get-ChildItem -Path "$($system.Path)\ExtractedGPUDriver\Windows\" | Where-Object name -like '*win10*' | ForEach-Object name
         Rename-Item -Path "$($system.Path)\ExtractedGPUDriver\Windows\$extractedpath" -NewName "NVIDIA_$($gpu.web_driver).exe"
         Move-Item -Path "$($system.Path)\ExtractedGPUDriver\Windows\NVIDIA_$($gpu.web_driver).exe" -Destination $system.Path
         remove-item "$($system.Path)\NVIDIA_$($gpu.web_driver).zip"
@@ -410,7 +421,7 @@ function DownloadDriver {
         ClearG4DNCredentials GPUUpdateG4Dn
     }
     Elseif ((($gpu.supported -eq "UnOfficial")  -and ($gpu.cloudprovider -eq "Google"))-eq $true) {
-        $googlestoragedriver =([xml](invoke-webrequest -uri https://storage.googleapis.com/nvidia-drivers-us-public).content).listbucketresult.contents.key  -like  "*server2016*.exe" | select -last 1
+        $googlestoragedriver =([xml](invoke-webrequest -uri https://storage.googleapis.com/nvidia-drivers-us-public).content).listbucketresult.contents.key  -like  "*server2016*.exe" | Select-Object -last 1
         (New-Object System.Net.WebClient).DownloadFile($("https://storage.googleapis.com/nvidia-drivers-us-public/" + $googlestoragedriver), "C:\ParsecTemp\Drivers\GoogleGRID.exe")
         }
     Elseif((($gpu.Supported -eq "yes") -and ($gpu.cloudprovider -eq "aws") -and ($gpu.Device_ID -ne "DEV_118A") -and ($gpu.Device_ID -ne "DEV_1EB8")) -eq $true) {
@@ -418,13 +429,14 @@ function DownloadDriver {
         (New-Object System.Net.WebClient).DownloadFile($("https://ec2-windows-nvidia-drivers.s3.amazonaws.com/" + $s3path), $($system.Path) + "\NVIDIA_" + $($gpu.web_driver) + ".exe")
         }
     Elseif((($gpu.Supported -eq "yes") -and ($gpu.cloudprovider -eq "azure")) -eq $true){
-        $azuresupportpage = (Invoke-WebRequest -Uri https://docs.microsoft.com/en-us/azure/virtual-machines/windows/n-series-driver-setup -UseBasicParsing).links.outerhtml -like "*GRID*"
+        if($osType.Caption -like "*Windows Server 2012 R2*") {$azuresupportpage = (Invoke-WebRequest -Uri https://docs.microsoft.com/en-us/azure/virtual-machines/windows/n-series-driver-setup -UseBasicParsing).links.outerhtml -like "*server2012r2*"} else {
+        $azuresupportpage = (Invoke-WebRequest -Uri https://docs.microsoft.com/en-us/azure/virtual-machines/windows/n-series-driver-setup -UseBasicParsing).links.outerhtml -like "*GRID*"}
         (New-Object System.Net.WebClient).DownloadFile($($azuresupportpage[0].split('"')[1]), $($system.Path) + "\NVIDIA_" + $($gpu.web_driver) + ".exe")
         }
     Else {
         #downloads driver from nvidia.com
-        $Download.Link = Invoke-WebRequest -Uri $gpu.url -Method Get -UseBasicParsing | select @{N='Latest';E={$($_.links.href -match"www.nvidia.com/download/driverResults.aspx*")[0].substring(2)}}
-        $download.Direct = Invoke-WebRequest -Uri $download.link.latest -Method Get -UseBasicParsing | select @{N= 'Download'; E={"http://us.download.nvidia.com" + $($_.links.href -match "/content/driverdownload*").split('=')[1].split('&')[0]}}
+        $Download.Link = Invoke-WebRequest -Uri $gpu.url -Method Get -UseBasicParsing | Select-Object @{N='Latest';E={$($_.links.href -match"www.nvidia.com/download/driverResults.aspx*")[0].substring(2)}}
+        $download.Direct = Invoke-WebRequest -Uri $download.link.latest -Method Get -UseBasicParsing | Select-Object @{N= 'Download'; E={"http://us.download.nvidia.com" + $($_.links.href -match "/content/driverdownload*").split('=')[1].split('&')[0]}}
         (New-Object System.Net.WebClient).DownloadFile($($download.direct.download), $($system.Path) + "\NVIDIA_" + $($gpu.web_driver) + ".exe")
         }
 }
@@ -455,7 +467,7 @@ function DisableSecondMonitor {
     Unblock-File -Path "$($system.Path)\DisableSecondMonitor.ps1"
 }
 
-function DisableSecondMonitor-shortcut{
+function DisableSecondMonitorshortcut{
     #creates startup shortcut that will start the script downloaded in setnvsmi
     Write-Output "Generic Non PNP Monitor"
     $Shell = New-Object -ComObject ("WScript.Shell")
@@ -480,15 +492,14 @@ function installDriver {
         else {
             new-itemproperty -path 'HKLM:\SOFTWARE\NVIDIA Corporation\Global' -Name "vGamingMarketplace" -Value "2" -PropertyType DWORD | Out-Null
             }
-    DisableSecondMonitor
-    DisableSecondMonitor-shortcut
+    DisableSecondMonitory
+    DisableSecondMonitorshortcut
     }
     Else {
     }
 }
 
 #setting up arrays below
-$url = @{}
 $download = @{}
 $app = @{}
 $gpu = @{Device_ID = installedGPUID}
@@ -517,6 +528,7 @@ $app.Parsec = Write-Host -foregroundcolor red "
                                 ######(*                   
                                                            
                   ~Parsec GPU Updater~
+                  ~Modified by SoftwareRat~
 " 
 
 function rebootLogic {
@@ -530,7 +542,7 @@ function rebootLogic {
         ElseIf ($GPU.NV_GRID -eq $true) {
             if ($gpu.Current_Mode -eq "TCC") {
                 setnvsmi
-                setnvsmi-shortcut
+                nvsmishortcut
                 }
             Reboot -message $System.OS_Reboot_Reason
             }
@@ -541,7 +553,7 @@ function rebootLogic {
         if ($gpu.NV_GRID -eq $true) {
             if ($gpu.Current_Mode -eq "TCC") {
                 setnvsmi
-                setnvsmi-shortcut
+                nvsmishortcut
                 }
             Reboot -message $System.OS_Reboot_Reason
         }
@@ -559,7 +571,7 @@ function setnvsmi {
     Unblock-File -Path "$($system.Path)\NVSMI.ps1"
 }
 
-function setnvsmi-shortcut{
+function nvsmishortcut{
     #creates startup shortcut that will start the script downloaded in setnvsmi
     Write-Output "Create NVSMI shortcut"
     $Shell = New-Object -ComObject ("WScript.Shell")
