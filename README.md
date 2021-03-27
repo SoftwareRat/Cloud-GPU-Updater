@@ -1,31 +1,37 @@
+
+
 This script is made to run on Paperspace P4000, P5000, AWS G3.4xLarge and Azure NV6 machines.  
 
-This script checks NVIDIA.com for updates, and will download and install graphics drivers including setting NVIDIA-SMI to the correct value on required GPUs.  
+This script checks NVIDIA.com (or the cloud computing provider directly, when available) for updates, and will download and install graphics drivers including setting NVIDIA-SMI to the correct value on required GPUs.
 
 ### Supported Operating Systems  
 
-Windows Server 2016  
-Windows Server 2019  
+- Windows 10 [Azure NV6 only]
+- Windows Server 2012 R2 [Azure NV6 only]
+- Windows Server 2016
+- Windows Server 2019
 
 ### Supported GPUs 
  
-AWS G3.4xLarge (Tesla M60)  
-AWS G2.2xLarge (GRID K520)  
-AWS G4dn.xLarge (Tesla T4 with vGaming driver)  
-Azure NV6 (Tesla M60)  
-Paperspace P4000 (Quadro P4000)  
-Paperspace P5000 (Quadro P5000)  
-Google P100 VW (Tesla P100 with Virtual Workstation Driver)  
-Google P4 VW (Tesla P4 with Virtual Workstation Driver)  
-Google T4 VW (Tesla T4 with Virtual Workstation Driver)  
+- AWS G3.4xLarge (Tesla M60)
+- AWS G2.2xLarge (GRID K520)
+- AWS G4dn.xLarge (Tesla T4 with vGaming driver)
+- Azure NV6 (Tesla M60)
+- Paperspace P4000 (Quadro P4000) 
+- Paperspace P5000 (Quadro P5000)
+- Google P100 VW (Tesla P100 with Virtual Workstation Driver)
+- Google P4 VW (Tesla P4 with Virtual Workstation Driver)
+- Google T4 VW (Tesla T4 with Virtual Workstation Driver)
 
 ### Instructions  
    
-1. Download https://github.com/jamesstringerparsec/Cloud-GPU-Updater/archive/master.zip  
-2. Extract the folder, right click "GPU Updater Tool.ps1" and run with Powershell - if the script immediately closes, right click and click edit, then the green play button in the Powershell ISE toolbar.  
+1. Download https://github.com/softwarerat/Cloud-GPU-Updater/archive/master.zip  
+2. Extract the folder, right click "GPU Updater Tool.ps1" and run with PowerShell - if the script immediately closes, right click and click edit, then the green play button in the Powershell ISE toolbar.  
 
 ### Q&A  
 
-Q. Why aren't Windows 10, 8.1 or Server 2012 supported  
-A. There is no need currently for Windows 8.1 or Server 2012, we will investigate Windows 10 when it is generaly available.
+Q. Why are you not supporting Windows 8.1?  
+A. There is no need currently for Windows 8.1.
 
+Q. Why are you only supporting Azure for Server 2012 R2 and Windows 10
+A. Windows 10 is not available on Google Cloud or Amazon Web Services, and i don't have VM access to other cloud service then Azure
